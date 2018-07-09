@@ -1,0 +1,96 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+
+library(readxl)
+dados <- read_excel("Concrete_Data.xls")
+
+
+normalize <- function(x){
+  return((x - min(x)) / (max(x) - min(x) ))
+}
+
+dados_norm = as.data.frame(lapply(dados, normalize))
+
+train = dados_norm[1:773,]
+
+test = dados_norm[774:1030,]
+
+library(neuralnet)
+
+concrete_model = neuralnet(strenght ~ cement + slag + ash + water + superplastic + coarseagg + fineagg + age, data= train, hidden = 7)
+
+plot(concrete_model)
+test[1:8]
+model_results = compute(concrete_model, test[1:8])
+
+predicted_strenght = model_results$net.result
+
+cor(predicted_strenght, test$strenght)
+
+
+
+
+```
+
+```{r}
+library(readr)
+do2015R <- read_csv("do2015R.csv")
+
+normalize <- function(x){
+  return((x - min(x)) / (max(x) - min(x) ))
+}
+
+library(data.table)
+data.table(do2015R)
+
+doRedux = do2015R[c('PESO','IDADEMAE', 'SEMAGESTAC', 'IDADE', 'CAUSABAS')]
+
+doRedux = na.omit(doRedux)
+doRedux$PESO = as.numeric(doRedux$PESO)
+doRedux$IDADE = as.numeric(doRedux$IDADE)
+doRedux$IDADEMAE = as.numeric(doRedux$IDADEMAE)
+
+doRedux$CAUSABAS = as.factor(doRedux$CAUSABAS)
+doRedux$CAUSABAS = as.numeric(doRedux$CAUSABAS)
+
+summary(doRedux)  
+dados_norm = as.data.frame(lapply(doRedux, normalize))
+
+train = dados_norm[1:600,]
+
+test = dados_norm[601:1640,]
+
+library(neuralnet)
+
+concrete_model = neuralnet(CAUSABAS ~ IDADEMAE + SEMAGESTAC + IDADE + PESO, data= train, hidden = 10)
+
+
+
+
+plot(concrete_model)
+
+
+
+  model_results = compute(concrete_model, test[1:4])
+
+predicted_SEM = model_results$net.result
+chisq.test(predicted_SEM, as.matrix(test['CAUSABAS']))
+
+
+regressao = lm(doRedux$CAUSABAS_O~doRedux$IDADEMAE+doRedux$IDADE+doRedux$PESO+doRedux$GESTACAO)
+summary(regressao)
+
+```
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
